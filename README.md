@@ -1,175 +1,299 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>圆球冒险游戏 - 在线版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>圆球冒险游戏 - 移动版</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
         
         body {
-            background-color: #f0f0f0;
-            font-family: 'Arial', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
             overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
         }
         
-        .game-wrapper {
+        .game-container {
             position: relative;
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .game-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .hearts {
+            font-size: 24px;
+            color: #ff4757;
+        }
+        
+        .score {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .game-area {
+            flex: 1;
+            position: relative;
             overflow: hidden;
         }
         
         #gameCanvas {
-            display: block;
-            background-color: white;
-        }
-        
-        #gameUI {
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: linear-gradient(to bottom, rgba(255,255,255,0.9), transparent);
-            pointer-events: none;
+            background-color: white;
+            touch-action: none;
         }
         
-        #hearts {
-            font-size: 28px;
-            color: #ff4757;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        #score {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        #gameOver {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 40px;
-            border-radius: 15px;
-            text-align: center;
-            display: none;
-            backdrop-filter: blur(10px);
-        }
-        
-        #gameOver h2 {
-            margin-top: 0;
-            font-size: 36px;
-            margin-bottom: 20px;
-            color: #ff4757;
-        }
-        
-        #finalScore {
-            color: #ffa502;
-            font-size: 28px;
-        }
-        
-        #restartBtn {
-            padding: 15px 30px;
-            font-size: 20px;
-            background: linear-gradient(45deg, #4CAF50, #45a049);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 25px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-        }
-        
-        #restartBtn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-        }
-        
-        #instructions {
+        .controls {
             position: absolute;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            font-size: 14px;
-            text-align: center;
+            display: flex;
+            gap: 15px;
+            z-index: 50;
         }
         
-        .share-buttons {
-            margin-top: 20px;
+        .control-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            border: 3px solid #4CAF50;
             display: flex;
-            gap: 10px;
+            align-items: center;
             justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .control-btn:active {
+            transform: scale(0.9);
+            background: rgba(76, 175, 80, 0.9);
+            color: white;
+        }
+        
+        .joystick-container {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 150px;
+            height: 150px;
+            z-index: 50;
+        }
+        
+        .joystick-base {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .joystick-stick {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 3px solid #4CAF50;
+            transition: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        
+        .game-over-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 90%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .game-over h2 {
+            color: #ff4757;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        
+        .final-score {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .restart-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+        
+        .restart-btn:active {
+            transform: scale(0.95);
         }
         
         .share-btn {
-            padding: 8px 16px;
-            font-size: 14px;
+            background: linear-gradient(45deg, #1da1f2, #0d8bd9);
+            color: white;
             border: none;
-            border-radius: 5px;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 20px;
             cursor: pointer;
+            margin-top: 15px;
             transition: all 0.3s ease;
         }
         
-        .share-wechat {
-            background-color: #07c160;
+        .orientation-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
             color: white;
+            text-align: center;
+            padding: 20px;
         }
         
-        .share-weibo {
-            background-color: #ff8200;
-            color: white;
+        @media (max-width: 600px) and (orientation: portrait) {
+            .controls {
+                bottom: 10px;
+            }
+            
+            .control-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 20px;
+            }
+            
+            .joystick-container {
+                width: 120px;
+                height: 120px;
+                left: 10px;
+                bottom: 10px;
+            }
+            
+            .joystick-base {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .joystick-stick {
+                width: 60px;
+                height: 60px;
+            }
         }
         
-        .share-link {
-            background-color: #1da1f2;
-            color: white;
+        @media (orientation: landscape) and (max-height: 500px) {
+            .controls {
+                display: none;
+            }
+            
+            .joystick-container {
+                bottom: 10px;
+                left: 10px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="game-wrapper">
-        <div id="gameUI">
-            <div id="hearts">❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️</div>
-            <div id="score">积分: 0</div>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="hearts" id="hearts">❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️</div>
+            <div class="score" id="score">积分: 0</div>
         </div>
         
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
-        
-        <div id="instructions">
-            使用 WASD 键移动 | 触碰怪物击杀它们 | 避开子弹！
+        <div class="game-area">
+            <canvas id="gameCanvas"></canvas>
+            
+            <!-- 虚拟摇杆 -->
+            <div class="joystick-container" id="joystickContainer">
+                <div class="joystick-base"></div>
+                <div class="joystick-stick" id="joystickStick"></div>
+            </div>
+            
+            <!-- 控制按钮 -->
+            <div class="controls">
+                <button class="control-btn" id="upBtn">↑</button>
+                <button class="control-btn" id="leftBtn">←</button>
+                <button class="control-btn" id="rightBtn">→</button>
+                <button class="control-btn" id="downBtn">↓</button>
+            </div>
         </div>
         
-        <div id="gameOver">
-            <h2>游戏结束！</h2>
-            <p>最终积分: <span id="finalScore">0</span></p>
-            <button id="restartBtn">重新开始游戏</button>
-            <div class="share-buttons">
-                <button class="share-btn share-link" onclick="shareGame()">分享游戏链接</button>
-                <button class="share-btn share-wechat" onclick="shareToSocial('wechat')">分享到微信</button>
+        <!-- 游戏结束界面 -->
+        <div class="game-over" id="gameOver">
+            <div class="game-over-content">
+                <h2>游戏结束！</h2>
+                <div class="final-score">最终积分: <span id="finalScore">0</span></div>
+                <button class="restart-btn" id="restartBtn">重新开始</button>
+                <br>
+                <button class="share-btn" id="shareBtn">分享游戏</button>
+            </div>
+        </div>
+        
+        <!-- 横屏提示 -->
+        <div class="orientation-warning" id="orientationWarning">
+            <div>
+                <h3>📱 请竖屏游玩</h3>
+                <p>为了获得最佳游戏体验，请将设备旋转至竖屏模式</p>
             </div>
         </div>
     </div>
@@ -183,14 +307,21 @@
         const gameOverDiv = document.getElementById('gameOver');
         const finalScoreSpan = document.getElementById('finalScore');
         const restartBtn = document.getElementById('restartBtn');
-        const instructionsDiv = document.getElementById('instructions');
+        const shareBtn = document.getElementById('shareBtn');
+        const orientationWarning = document.getElementById('orientationWarning');
+
+        // 设置画布大小
+        function resizeCanvas() {
+            const gameArea = document.querySelector('.game-area');
+            canvas.width = gameArea.clientWidth;
+            canvas.height = gameArea.clientHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
 
         // 游戏状态
         let score = 0;
         let gameRunning = true;
-        let gameStarted = false;
-
-        // 玩家对象
         let player = {
             x: canvas.width / 2,
             y: canvas.height / 2,
@@ -200,9 +331,9 @@
             color: '#0066cc'
         };
 
-        // 按键状态
-        const keys = {
-            w: false, a: false, s: false, d: false, r: false
+        // 控制状态
+        const controls = {
+            up: false, down: false, left: false, right: false
         };
 
         // 游戏对象数组
@@ -210,13 +341,11 @@
         let bullets = [];
         let particles = [];
 
-        // 隐藏说明
-        setTimeout(() => {
-            instructionsDiv.style.opacity = '0';
-            setTimeout(() => {
-                instructionsDiv.style.display = 'none';
-            }, 500);
-        }, 5000);
+        // 摇杆控制
+        const joystickContainer = document.getElementById('joystickContainer');
+        const joystickStick = document.getElementById('joystickStick');
+        let joystickActive = false;
+        let joystickCenter = { x: 0, y: 0 };
 
         // 怪物类
         class Monster {
@@ -334,30 +463,114 @@
             }
         }
 
-        // 事件监听
-        document.addEventListener('keydown', (e) => {
-            if (keys.hasOwnProperty(e.key.toLowerCase())) {
-                keys[e.key.toLowerCase()] = true;
-            }
-            if (e.key.toLowerCase() === 'r' && !gameRunning) restartGame();
-        });
+        // 摇杆控制函数
+        function initJoystick() {
+            const rect = joystickContainer.getBoundingClientRect();
+            joystickCenter.x = rect.left + rect.width / 2;
+            joystickCenter.y = rect.top + rect.height / 2;
 
-        document.addEventListener('keyup', (e) => {
-            if (keys.hasOwnProperty(e.key.toLowerCase())) {
-                keys[e.key.toLowerCase()] = false;
-            }
-        });
+            // 触摸事件
+            joystickContainer.addEventListener('touchstart', handleJoystickStart, { passive: false });
+            joystickContainer.addEventListener('touchmove', handleJoystickMove, { passive: false });
+            joystickContainer.addEventListener('touchend', handleJoystickEnd, { passive: false });
 
-        restartBtn.addEventListener('click', restartGame);
-
-        // 游戏逻辑
-        function updatePlayer() {
-            if (keys.w && player.y - player.radius > 0) player.y -= player.speed;
-            if (keys.s && player.y + player.radius < canvas.height) player.y += player.speed;
-            if (keys.a && player.x - player.radius > 0) player.x -= player.speed;
-            if (keys.d && player.x + player.radius < canvas.width) player.x += player.speed;
+            // 鼠标事件（用于测试）
+            joystickContainer.addEventListener('mousedown', handleJoystickStart);
+            joystickContainer.addEventListener('mousemove', handleJoystickMove);
+            joystickContainer.addEventListener('mouseup', handleJoystickEnd);
+            joystickContainer.addEventListener('mouseleave', handleJoystickEnd);
         }
 
+        function handleJoystickStart(e) {
+            e.preventDefault();
+            joystickActive = true;
+        }
+
+        function handleJoystickMove(e) {
+            if (!joystickActive) return;
+            e.preventDefault();
+
+            const touch = e.touches ? e.touches[0] : e;
+            const rect = joystickContainer.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            let deltaX = touch.clientX - centerX;
+            let deltaY = touch.clientY - centerY;
+            
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const maxDistance = rect.width / 2 - 35;
+            
+            if (distance > maxDistance) {
+                deltaX = (deltaX / distance) * maxDistance;
+                deltaY = (deltaY / distance) * maxDistance;
+            }
+            
+            joystickStick.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
+            
+            // 更新控制状态
+            controls.left = deltaX < -20;
+            controls.right = deltaX > 20;
+            controls.up = deltaY < -20;
+            controls.down = deltaY > 20;
+        }
+
+        function handleJoystickEnd(e) {
+            e.preventDefault();
+            joystickActive = false;
+            joystickStick.style.transform = 'translate(-50%, -50%)';
+            controls.left = controls.right = controls.up = controls.down = false;
+        }
+
+        // 按钮控制
+        function initButtons() {
+            const buttons = [
+                { id: 'upBtn', control: 'up' },
+                { id: 'downBtn', control: 'down' },
+                { id: 'leftBtn', control: 'left' },
+                { id: 'rightBtn', control: 'right' }
+            ];
+
+            buttons.forEach(({ id, control }) => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        controls[control] = true;
+                    }, { passive: false });
+
+                    btn.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        controls[control] = false;
+                    }, { passive: false });
+
+                    // 鼠标事件（用于测试）
+                    btn.addEventListener('mousedown', () => controls[control] = true);
+                    btn.addEventListener('mouseup', () => controls[control] = false);
+                }
+            });
+        }
+
+        // 横屏检测
+        function checkOrientation() {
+            if (window.innerHeight < window.innerWidth && window.innerHeight < 500) {
+                orientationWarning.style.display = 'flex';
+            } else {
+                orientationWarning.style.display = 'none';
+            }
+        }
+        window.addEventListener('resize', checkOrientation);
+        checkOrientation();
+
+        // 更新玩家位置
+        function updatePlayer() {
+            if (controls.up && player.y - player.radius > 0) player.y -= player.speed;
+            if (controls.down && player.y + player.radius < canvas.height) player.y += player.speed;
+            if (controls.left && player.x - player.radius > 0) player.x -= player.speed;
+            if (controls.right && player.x + player.radius < canvas.width) player.x += player.speed;
+        }
+
+        // 生成怪物
         function spawnMonster() {
             if (Math.random() < 0.02) {
                 const angle = Math.random() * Math.PI * 2;
@@ -370,6 +583,7 @@
             }
         }
 
+        // 碰撞检测
         function checkCollisions() {
             for (let i = monsters.length - 1; i >= 0; i--) {
                 const monster = monsters[i];
@@ -398,12 +612,14 @@
             }
         }
 
+        // 游戏结束
         function gameOver() {
             gameRunning = false;
             finalScoreSpan.textContent = score;
-            gameOverDiv.style.display = 'block';
+            gameOverDiv.style.display = 'flex';
         }
 
+        // 重新开始
         function restartGame() {
             score = 0; gameRunning = true;
             player = { x: canvas.width / 2, y: canvas.height / 2, radius: 15, speed: 5, health: 10, color: '#0066cc' };
@@ -413,6 +629,7 @@
             gameLoop();
         }
 
+        // 更新显示
         function updateHearts() {
             let hearts = '';
             for (let i = 0; i < player.health; i++) hearts += '❤️';
@@ -426,20 +643,16 @@
         // 分享功能
         function shareGame() {
             const gameUrl = window.location.href;
-            navigator.clipboard.writeText(gameUrl).then(() => {
-                alert('游戏链接已复制到剪贴板！可以分享给朋友了！');
-            }).catch(() => {
-                prompt('请复制以下链接分享给朋友：', gameUrl);
-            });
-        }
-
-        function shareToSocial(platform) {
-            const gameUrl = window.location.href;
-            const shareText = `我在圆球冒险游戏中获得了${score}分！快来挑战吧！`;
-            
-            if (platform === 'wechat') {
-                alert('请使用微信扫一扫功能，或复制链接分享给微信好友');
-                navigator.clipboard.writeText(gameUrl);
+            if (navigator.share) {
+                navigator.share({
+                    title: '圆球冒险游戏',
+                    text: `我在圆球冒险游戏中获得了${score}分！快来挑战吧！`,
+                    url: gameUrl
+                });
+            } else {
+                navigator.clipboard.writeText(gameUrl).then(() => {
+                    alert('游戏链接已复制到剪贴板！');
+                });
             }
         }
 
@@ -465,7 +678,7 @@
 
             checkCollisions();
 
-            // 绘制
+            // 绘制游戏对象
             ctx.fillStyle = player.color;
             ctx.beginPath(); ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2); ctx.fill();
             monsters.forEach(monster => monster.draw());
@@ -474,6 +687,17 @@
 
             requestAnimationFrame(gameLoop);
         }
+
+        // 初始化
+        initJoystick();
+        initButtons();
+        restartBtn.addEventListener('click', restartGame);
+        shareBtn.addEventListener('click', shareGame);
+
+        // 防止默认触摸行为
+        document.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+        }, { passive: false });
 
         // 开始游戏
         gameLoop();
